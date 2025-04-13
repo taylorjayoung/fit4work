@@ -90,11 +90,20 @@
     "path": "database/jobs.db"
   },
   "resume_settings": {
-    "supported_formats": ["docx", "pdf"],
+    "supported_formats": ["docx", "pdf", "txt"],
     "storage_path": "user_data/resumes/"
   },
   "message_templates": {
     "cold_email": "Dear {hiring_manager},\n\nI came across your job posting for the {job_title} position at {company_name} and I'm excited to apply. With my experience in {relevant_skills}, I believe I would be a great fit for this role.\n\n{custom_paragraph}\n\nI've attached my resume for your review. I would welcome the opportunity to discuss how my skills and experience align with your needs.\n\nThank you for your consideration.\n\nBest regards,\n{user_name}",
     "follow_up": "Dear {hiring_manager},\n\nI hope this email finds you well. I recently applied for the {job_title} position at {company_name} and wanted to follow up on my application.\n\nI remain very interested in this opportunity and would appreciate any update you can provide on the status of my application.\n\nThank you for your time.\n\nBest regards,\n{user_name}"
+  },
+  "ai_services": {
+    "anthropic": {
+      "enabled": true,
+      "api_key": "YOUR_ANTHROPIC_API_KEY",
+      "model": "claude-3-opus-20240229",
+      "max_tokens": 4096,
+      "temperature": 0.2
+    }
   }
 }

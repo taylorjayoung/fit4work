@@ -2,11 +2,13 @@
 Resume Parser for the Job Scraper Application.
 
 This module provides functionality for parsing and extracting information
-from user resumes in various formats (DOCX, PDF).
+from user resumes in various formats (DOCX, PDF) using both traditional methods
+and AI-powered parsing via Anthropic's Claude API.
 """
 
 import os
 import re
+import json
 import logging
 from pathlib import Path
 import docx
@@ -14,6 +16,7 @@ from pdfminer.high_level import extract_text
 import nltk
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
+from anthropic import Anthropic
 
 logger = logging.getLogger(__name__)
 
@@ -33,12 +36,30 @@ class ResumeParser:
     Parser for extracting information from resumes.
     
     This class provides methods for parsing resumes in different formats
-    and extracting structured information from them.
+    and extracting structured information from them using both traditional
+    pattern matching and AI-powered parsing.
     """
     
-    def __init__(self):
-        """Initialize the resume parser."""
+    def __init__(self, config=None):
+        """
+        Initialize the resume parser.
+        
+        Args:
+            config: Configuration dictionary containing AI service settings
+        """
         self.stop_words = set(stopwords.words('english'))
+        self.config = config
+        self.anthropic_client = None
+        
+        # Initialize Anthropic client if configured
+        if config and 'ai_services' in config and 'anthropic' in config['ai_services']:
+            anthropic_config = config['ai_services']['anthropic']
+            if anthropic_config.get('enabled', False):
+                try:
+                    self.anthropic_client = Anthropic(api_key=anthropic_config['api_key'])
+                    logger.info("Anthropic client initialized successfully")
+                except Exception as e:
+                    logger.error(f"Failed to initialize Anthropic client: {e}", exc_info=True)
     
     def parse(self, file_path):
         """
@@ -63,6 +84,9 @@ class ResumeParser:
                 text = self._extract_text_from_docx(file_path)
             elif file_path.suffix.lower() == '.pdf':
                 text = self._extract_text_from_pdf(file_path)
+            elif file_path.suffix.lower() == '.txt':
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    text = f.read()
             else:
                 logger.error(f"Unsupported file format: {file_path.suffix}")
                 return None
@@ -71,7 +95,20 @@ class ResumeParser:
                 logger.error(f"Failed to extract text from resume: {file_path}")
                 return None
             
-            # Extract structured information from the text
+            # Try AI-powered parsing first if available
+            if self.anthropic_client:
+                try:
+                    logger.info(f"Attempting AI-powered parsing for resume: {file_path}")
+                    resume_data = self._parse_with_anthropic(text)
+                    if resume_data:
+                        resume_data['file_path'] = str(file_path)
+                        resume_data['content_text'] = text
+                        logger.info(f"Successfully parsed resume with AI: {file_path}")
+                        return resume_data
+                except Exception as e:
+                    logger.warning(f"AI-powered parsing failed, falling back to traditional parsing: {e}", exc_info=True)
+            
+            # Fall back to traditional parsing methods
             resume_data = self._extract_information(text)
             resume_data['file_path'] = str(file_path)
             resume_data['content_text'] = text
@@ -81,6 +118,153 @@ class ResumeParser:
             
         except Exception as e:
             logger.error(f"Error parsing resume {file_path}: {e}", exc_info=True)
+            return None
+            
+    def _parse_with_anthropic(self, text):
+        """
+        Parse resume text using Anthropic's Claude API.
+        
+        Args:
+            text: Resume text to parse
+            
+        Returns:
+            Dictionary containing structured resume information
+        """
+        if not self.anthropic_client:
+            logger.error("Anthropic client not initialized")
+            return None
+            
+        # Get Anthropic configuration
+        anthropic_config = self.config['ai_services']['anthropic']
+        model = anthropic_config.get('model', 'claude-3-opus-20240229')
+        max_tokens = anthropic_config.get('max_tokens', 4096)
+        temperature = anthropic_config.get('temperature', 0.2)
+        
+        # Create the prompt
+        prompt = f"""
+        You are an expert resume parser. I will provide you with the text of a resume, and I need you to extract structured information from it.
+        
+        Please analyze the resume and extract the following information:
+        1. Name of the candidate
+        2. Email addresses
+        3. Phone numbers
+        4. Education history (each entry should include institution, degree, field of study, and dates if available)
+        5. Work experience (each entry should include company name, job title, dates, and description)
+        6. Skills (technical and soft skills)
+        7. Links (LinkedIn, GitHub, portfolio, etc.)
+        8. Projects (if any)
+        
+        Format your response as a JSON object with the following structure:
+        {{
+            "name": "Candidate Name",
+            "email": ["email1@example.com", "email2@example.com"],
+            "phone": ["123-456-7890"],
+            "education": [
+                {{
+                    "institution": "University Name",
+                    "degree": "Degree Name",
+                    "field": "Field of Study",
+                    "start_date": "Start Date",
+                    "end_date": "End Date"
+                }}
+            ],
+            "experience": [
+                {{
+                    "company": "Company Name",
+                    "title": "Job Title",
+                    "start_date": "Start Date",
+                    "end_date": "End Date",
+                    "description": "Job Description"
+                }}
+            ],
+            "skills": ["Skill 1", "Skill 2", "Skill 3"],
+            "links": {{
+                "linkedin": "LinkedIn URL",
+                "github": "GitHub URL",
+                "portfolio": "Portfolio URL"
+            }},
+            "projects": [
+                {{
+                    "name": "Project Name",
+                    "description": "Project Description",
+                    "technologies": ["Tech 1", "Tech 2"]
+                }}
+            ]
+        }}
+        
+        If any information is not available in the resume, use null or an empty array/object as appropriate.
+        
+        Here is the resume text:
+        
+        {text}
+        """
+        
+        try:
+            # Call the Anthropic API
+            response = self.anthropic_client.messages.create(
+                model=model,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                system="You are an expert resume parser that extracts structured information from resumes and returns it in JSON format.",
+                messages=[
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            
+            # Extract the JSON response
+            response_text = response.content[0].text
+            
+            # Find the JSON part of the response
+            json_start = response_text.find('{')
+            json_end = response_text.rfind('}') + 1
+            
+            if json_start >= 0 and json_end > json_start:
+                json_str = response_text[json_start:json_end]
+                resume_data = json.loads(json_str)
+                
+                # Convert to the format expected by the application
+                formatted_data = {
+                    'name': resume_data.get('name'),
+                    'email': resume_data.get('email', []),
+                    'phone': resume_data.get('phone', []),
+                    'education': [],
+                    'experience': [],
+                    'skills': resume_data.get('skills', []),
+                    'links': resume_data.get('links', {})
+                }
+                
+                # Format education entries
+                for edu in resume_data.get('education', []):
+                    entry = f"{edu.get('institution', '')} - {edu.get('degree', '')} {edu.get('field', '')}"
+                    if edu.get('start_date') and edu.get('end_date'):
+                        entry += f" ({edu.get('start_date')} - {edu.get('end_date')})"
+                    formatted_data['education'].append(entry)
+                
+                # Format experience entries
+                for exp in resume_data.get('experience', []):
+                    entry = f"{exp.get('title', '')} at {exp.get('company', '')}"
+                    if exp.get('start_date') and exp.get('end_date'):
+                        entry += f" ({exp.get('start_date')} - {exp.get('end_date')})"
+                    if exp.get('description'):
+                        entry += f"\n{exp.get('description')}"
+                    formatted_data['experience'].append(entry)
+                
+                # Add projects as additional experience entries if available
+                for proj in resume_data.get('projects', []):
+                    entry = f"Project: {proj.get('name', '')}"
+                    if proj.get('description'):
+                        entry += f"\n{proj.get('description')}"
+                    if proj.get('technologies'):
+                        entry += f"\nTechnologies: {', '.join(proj.get('technologies'))}"
+                    formatted_data['experience'].append(entry)
+                
+                return formatted_data
+            else:
+                logger.error("Failed to extract JSON from Anthropic response")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Error calling Anthropic API: {e}", exc_info=True)
             return None
     
     def _extract_text_from_docx(self, file_path):

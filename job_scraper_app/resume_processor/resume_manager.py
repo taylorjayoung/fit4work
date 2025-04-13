@@ -38,7 +38,7 @@ class ResumeManager:
         os.makedirs(self.storage_dir / "tailored", exist_ok=True)
         
         # Initialize the resume parser and generator
-        self.parser = ResumeParser()
+        self.parser = ResumeParser(config)
         self.generator = ResumeGenerator(self.storage_dir / "tailored")
     
     def upload_resume(self, file_path, name=None, make_primary=False):
@@ -51,7 +51,8 @@ class ResumeManager:
                 logger.error(f"Resume file not found: {file_path}")
                 return None
             
-            if file_path.suffix.lower() not in ['.docx', '.pdf']:
+            supported_formats = [f".{fmt}" for fmt in self.config["resume_settings"]["supported_formats"]]
+            if file_path.suffix.lower() not in supported_formats:
                 logger.error(f"Unsupported file format: {file_path.suffix}")
                 return None
             
