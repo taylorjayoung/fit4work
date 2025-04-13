@@ -106,3 +106,8 @@ venv.bak/
 
 # Project specific
 app.log
+
+# Config files with sensitive information
+job_scraper_app/config.json
+job_scraper_app/.env
+.env

@@ -43,16 +43,35 @@ except ImportError as e:
     logger.error("Please ensure all dependencies are installed by running: pip install -r job_scraper_app/requirements.txt")
     sys.exit(1)
 
-# Load configuration
+# Import config_loader
 try:
-    config_path = project_dir / "job_scraper_app" / "config.json"
-    with open(config_path, 'r') as f:
-        config = json.load(f)
-    logger.info("Configuration loaded successfully")
-except (FileNotFoundError, json.JSONDecodeError) as e:
+    from job_scraper_app.config_loader import load_config
+    # Load configuration using the enhanced config loader
+    config = load_config()
+    logger.info("Configuration loaded successfully using config_loader")
+    
+    # Check if Anthropic API key is configured
+    if 'ai_services' in config and 'anthropic' in config['ai_services']:
+        api_key = config['ai_services']['anthropic'].get('api_key', '')
+        if api_key and api_key != 'YOUR_ANTHROPIC_API_KEY':
+            logger.info(f"Anthropic API key is configured: {api_key[:5]}...{api_key[-4:] if len(api_key) > 10 else ''}")
+        else:
+            logger.warning("Anthropic API key is not set or is using the placeholder value.")
+            logger.warning("Please set your API key using one of the methods described in job_scraper_app/API_KEY_SETUP.md")
+    else:
+        logger.warning("Anthropic API configuration not found in config.")
+except Exception as e:
     logger.error(f"Failed to load configuration: {e}")
-    logger.error("Please ensure config.json exists and contains valid JSON")
-    sys.exit(1)
+    logger.error("Falling back to loading from config.json directly")
+    try:
+        config_path = project_dir / "job_scraper_app" / "config.json"
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+        logger.info("Configuration loaded successfully from config.json")
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        logger.error(f"Failed to load configuration: {e}")
+        logger.error("Please ensure config.json exists and contains valid JSON")
+        sys.exit(1)
 
 # Create required directories
 try:

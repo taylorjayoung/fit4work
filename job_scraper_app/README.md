@@ -68,6 +68,15 @@ The application is highly configurable through the `config.json` file:
 - **Database Settings**: Configure the database connection
 - **Resume Settings**: Set up resume storage and processing options
 - **Message Templates**: Customize outreach message templates
+- **AI Services**: Configure AI services like Anthropic's Claude
+
+### API Key Security
+
+For security reasons, API keys should not be committed to GitHub. See [API_KEY_SETUP.md](API_KEY_SETUP.md) for instructions on how to securely configure your API keys using:
+
+- Environment variables (recommended)
+- Local configuration files
+- Other secure methods
 
 ## Project Structure
 

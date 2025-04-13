@@ -38,20 +38,23 @@ try:
     from database.setup import setup_database
     from scrapers.scraper_manager import ScraperManager
     from ui.app import create_app
+    from config_loader import load_config as load_config_with_env
 except ImportError as e:
     logger.error(f"Failed to import required modules: {e}")
     logger.error("Please ensure all dependencies are installed by running: pip install -r requirements.txt")
     sys.exit(1)
 
 def load_config():
-    """Load the application configuration from config.json"""
+    """
+    Load the application configuration using the enhanced config loader
+    that supports environment variables and local config files
+    """
     try:
-        config_path = project_dir / "config.json"
-        with open(config_path, 'r') as f:
-            config = json.load(f)
+        # Use the new config loader that supports environment variables
+        config = load_config_with_env()
         logger.info("Configuration loaded successfully")
         return config
-    except (FileNotFoundError, json.JSONDecodeError) as e:
+    except Exception as e:
         logger.error(f"Failed to load configuration: {e}")
         logger.error("Please ensure config.json exists and contains valid JSON")
         sys.exit(1)

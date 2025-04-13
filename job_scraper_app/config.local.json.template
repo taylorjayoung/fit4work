@@ -1,0 +1,7 @@
+{
+  "ai_services": {
+    "anthropic": {
+      "api_key": "YOUR_ACTUAL_ANTHROPIC_API_KEY"
+    }
+  }
+}

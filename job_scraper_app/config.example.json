@@ -1,0 +1,109 @@
+{
+  "job_sites": [
+    {
+      "name": "Remote.co",
+      "enabled": true,
+      "base_url": "https://remote.co/remote-jobs/",
+      "job_listings_url": "https://remote.co/remote-jobs/online-data-entry/",
+      "pagination": {
+        "enabled": true,
+        "pattern": "https://remote.co/remote-jobs/online-data-entry/page/{page_num}/"
+      },
+      "selectors": {
+        "job_container": ".job_listing",
+        "job_title": ".position h3",
+        "company_name": ".company_name",
+        "job_type": ".job-type",
+        "location": ".location",
+        "description_link": ".position h3 a",
+        "description_selector": ".job_description",
+        "posted_date": ".date"
+      }
+    },
+    {
+      "name": "We Work Remotely",
+      "enabled": true,
+      "base_url": "https://weworkremotely.com/",
+      "job_listings_url": "https://weworkremotely.com/remote-jobs/search?term=data+entry",
+      "pagination": {
+        "enabled": false
+      },
+      "selectors": {
+        "job_container": ".job",
+        "job_title": ".title",
+        "company_name": ".company",
+        "job_type": ".job-type",
+        "location": ".region",
+        "description_link": ".title a",
+        "description_selector": ".listing-container",
+        "posted_date": ".date"
+      }
+    },
+    {
+      "name": "RemoteOK",
+      "enabled": true,
+      "base_url": "https://remoteok.com/",
+      "job_listings_url": "https://remoteok.com/remote-data-entry-jobs",
+      "pagination": {
+        "enabled": false
+      },
+      "selectors": {
+        "job_container": ".job",
+        "job_title": ".company_and_position h2",
+        "company_name": ".company",
+        "job_type": ".tags .tag",
+        "location": ".location",
+        "description_link": ".company_and_position a",
+        "description_selector": ".description",
+        "posted_date": ".time"
+      }
+    },
+    {
+      "name": "FlexJobs",
+      "enabled": true,
+      "base_url": "https://www.flexjobs.com/",
+      "job_listings_url": "https://www.flexjobs.com/search?search=data+entry",
+      "pagination": {
+        "enabled": true,
+        "pattern": "https://www.flexjobs.com/search?search=data+entry&page={page_num}"
+      },
+      "selectors": {
+        "job_container": ".job-listing",
+        "job_title": ".job-title a",
+        "company_name": ".job-company",
+        "job_type": ".job-type",
+        "location": ".job-locations",
+        "description_link": ".job-title a",
+        "description_selector": ".job-description",
+        "posted_date": ".job-age"
+      }
+    }
+  ],
+  "scraping_settings": {
+    "request_delay": 2,
+    "max_pages_per_site": 5,
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "use_selenium_for_dynamic_sites": true
+  },
+  "database": {
+    "type": "sqlite",
+    "path": "database/jobs.db"
+  },
+  "resume_settings": {
+    "supported_formats": ["docx", "pdf", "txt"],
+    "storage_path": "user_data/resumes/"
+  },
+  "message_templates": {
+    "cold_email": "Dear {hiring_manager},\n\nI came across your job posting for the {job_title} position at {company_name} and I'm excited to apply. With my experience in {relevant_skills}, I believe I would be a great fit for this role.\n\n{custom_paragraph}\n\nI've attached my resume for your review. I would welcome the opportunity to discuss how my skills and experience align with your needs.\n\nThank you for your consideration.\n\nBest regards,\n{user_name}",
+    "follow_up": "Dear {hiring_manager},\n\nI hope this email finds you well. I recently applied for the {job_title} position at {company_name} and wanted to follow up on my application.\n\nI remain very interested in this opportunity and would appreciate any update you can provide on the status of my application.\n\nThank you for your time.\n\nBest regards,\n{user_name}"
+  },
+  "ai_services": {
+    "anthropic": {
+      "enabled": true,
+      "api_key": "YOUR_ANTHROPIC_API_KEY",
+      "model": "claude-3-opus-20240229",
+      "max_tokens": 4096,
+      "temperature": 0.2
+    }
+  }
+}
