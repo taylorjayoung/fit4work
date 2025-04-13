@@ -99,16 +99,31 @@ class ResumeParser:
             if self.anthropic_client:
                 try:
                     logger.info(f"Attempting AI-powered parsing for resume: {file_path}")
+                    logger.info(f"Anthropic client initialized: {self.anthropic_client is not None}")
+                    
+                    # Check if API key is set
+                    if self.config and 'ai_services' in self.config and 'anthropic' in self.config['ai_services']:
+                        api_key = self.config['ai_services']['anthropic'].get('api_key', '')
+                        logger.info(f"API key configured: {api_key[:5]}...{api_key[-5:] if len(api_key) > 10 else ''}")
+                    
+                    # Try to parse with Anthropic
                     resume_data = self._parse_with_anthropic(text)
+                    
                     if resume_data:
+                        logger.info(f"AI parsing successful, got data: {list(resume_data.keys())}")
                         resume_data['file_path'] = str(file_path)
                         resume_data['content_text'] = text
                         logger.info(f"Successfully parsed resume with AI: {file_path}")
                         return resume_data
+                    else:
+                        logger.warning("AI parsing returned None, falling back to traditional parsing")
                 except Exception as e:
                     logger.warning(f"AI-powered parsing failed, falling back to traditional parsing: {e}", exc_info=True)
+            else:
+                logger.info("Anthropic client not initialized, using traditional parsing")
             
             # Fall back to traditional parsing methods
+            logger.info("Using traditional parsing methods")
             resume_data = self._extract_information(text)
             resume_data['file_path'] = str(file_path)
             resume_data['content_text'] = text
@@ -200,6 +215,8 @@ class ResumeParser:
         """
         
         try:
+            logger.info(f"Calling Anthropic API with model: {model}, max_tokens: {max_tokens}, temperature: {temperature}")
+            
             # Call the Anthropic API
             response = self.anthropic_client.messages.create(
                 model=model,
@@ -211,12 +228,16 @@ class ResumeParser:
                 ]
             )
             
+            logger.info(f"Received response from Anthropic API: {response.id}")
+            
             # Extract the JSON response
             response_text = response.content[0].text
+            logger.info(f"Response text length: {len(response_text)} characters")
             
             # Find the JSON part of the response
             json_start = response_text.find('{')
             json_end = response_text.rfind('}') + 1
+            logger.info(f"JSON part found at positions {json_start} to {json_end}")
             
             if json_start >= 0 and json_end > json_start:
                 json_str = response_text[json_start:json_end]
