@@ -44,7 +44,7 @@ def main():
         return 1
     
     # Commit the changes
-    commit_message = "Fix syntax error in one-liner and add comprehensive testing"
+    commit_message = "Implement improved Flask app with resume upload and job scraping functionality"
     if not run_command(["git", "commit", "-m", commit_message], "git commit"):
         return 1
     
