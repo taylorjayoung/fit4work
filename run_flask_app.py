@@ -674,4 +674,6 @@ def simple_home():
 
 if __name__ == '__main__':
     print("Starting Flask application on http://localhost:8080")
+    print("To access the application, open your browser and go to http://localhost:8080")
+    print("For usage instructions, see FIT4WORK_USAGE.md")
     app.run(host='0.0.0.0', port=8080, debug=True)

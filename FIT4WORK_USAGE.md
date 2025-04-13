@@ -138,8 +138,41 @@ If you encounter any issues:
    python improved_flask_app.py --rebuild-db
    ```
 
+## AI-Powered Resume Parsing
+
+Fit4Work now includes AI-powered resume parsing using Anthropic's Claude API. This feature provides more intelligent and accurate extraction of information from your resumes, regardless of their format or structure.
+
+### Setting Up Anthropic API
+
+1. **Get an API Key**:
+   - Sign up for an account at [Anthropic](https://www.anthropic.com/)
+   - Generate an API key from your account dashboard
+
+2. **Configure the API Key**:
+   - Open `job_scraper_app/config.json`
+   - Find the `ai_services` section
+   - Replace `"YOUR_ANTHROPIC_API_KEY"` with your actual API key:
+   ```json
+   "ai_services": {
+     "anthropic": {
+       "enabled": true,
+       "api_key": "YOUR_ACTUAL_API_KEY_HERE",
+       "model": "claude-3-opus-20240229",
+       "max_tokens": 4096,
+       "temperature": 0.2
+     }
+   }
+   ```
+
+3. **Benefits of AI Parsing**:
+   - More accurate identification of resume sections
+   - Better extraction of skills, experience, and education
+   - Works with various resume formats and structures
+   - Provides more detailed and structured information
+
 ## Additional Information
 
 - Resumes are stored in `job_scraper_app/user_data/resumes/`
 - The database is located at `job_scraper_app/database/jobs.db`
 - Configuration settings are in `job_scraper_app/config.json`
+- Supported resume formats: PDF, DOCX, and TXT
