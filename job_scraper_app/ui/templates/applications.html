@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Applications - Job Scraper App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h1 class="h4 mb-0">Job Applications</h1>
+            </div>
+            <div class="card-body">
+                {% if job_applications %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Job Title</th>
+                                    <th>Company</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Resume</th>
+                                    <th>Messages</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for application in job_applications %}
+                                    <tr>
+                                        <td>{{ application.id }}</td>
+                                        <td>{{ application.job_listing.title }}</td>
+                                        <td>{{ application.job_listing.company_name }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if application.status == 'applied' else 'warning' if application.status == 'pending' else 'info' if application.status == 'interviewed' else 'danger' if application.status == 'rejected' else 'primary' }}">
+                                                {{ application.status }}
+                                            </span>
+                                        </td>
+                                        <td>{{ application.application_date.strftime('%Y-%m-%d') }}</td>
+                                        <td>
+                                            {% if application.resume %}
+                                                <a href="{{ url_for('resume', resume_id=application.resume.base_resume_id) }}">
+                                                    <i class="fas fa-file-alt"></i> {{ application.resume.name }}
+                                                </a>
+                                            {% else %}
+                                                <span class="text-muted">None</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% set message_count = application.outreach_messages|length %}
+                                            {% if message_count > 0 %}
+                                                <span class="badge bg-info">{{ message_count }}</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">0</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{{ url_for('application', application_id=application.id) }}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> You haven't created any job applications yet. Browse job listings and create applications to get started.
+                    </div>
+                    <a href="{{ url_for('job_listings') }}" class="btn btn-primary">
+                        <i class="fas fa-list"></i> Browse Job Listings
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Application Statistics -->
+{% if job_applications %}
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h2 class="h5 mb-0"><i class="fas fa-chart-pie"></i> Application Statistics</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Total Applications</h5>
+                                    <p class="display-4">{{ job_applications|length }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Status Breakdown</h5>
+                                    <div class="d-flex justify-content-around">
+                                        <div>
+                                            <span class="badge bg-warning d-block p-2 mb-1">Pending</span>
+                                            <h5>{{ job_applications|selectattr('status', 'equalto', 'pending')|list|length }}</h5>
+                                        </div>
+                                        <div>
+                                            <span class="badge bg-success d-block p-2 mb-1">Applied</span>
+                                            <h5>{{ job_applications|selectattr('status', 'equalto', 'applied')|list|length }}</h5>
+                                        </div>
+                                        <div>
+                                            <span class="badge bg-info d-block p-2 mb-1">Interviewed</span>
+                                            <h5>{{ job_applications|selectattr('status', 'equalto', 'interviewed')|list|length }}</h5>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Recent Activity</h5>
+                                    <p class="mb-0">
+                                        <strong>Last Application:</strong><br>
+                                        {% set latest = job_applications|sort(attribute='application_date')|last %}
+                                        {{ latest.application_date.strftime('%Y-%m-%d') }} - {{ latest.job_listing.company_name }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Application Tips -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h2 class="h5 mb-0"><i class="fas fa-lightbulb"></i> Job Application Tips</h2>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h5>Before Applying</h5>
+                        <ul>
+                            <li>Research the company thoroughly</li>
+                            <li>Tailor your resume to match the job description</li>
+                            <li>Prepare a customized cover letter</li>
+                            <li>Review your online presence (LinkedIn, GitHub, etc.)</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h5>During the Application Process</h5>
+                        <ul>
+                            <li>Follow all application instructions carefully</li>
+                            <li>Submit all required documents</li>
+                            <li>Use the same keywords from the job description</li>
+                            <li>Proofread everything before submitting</li>
+                            <li>Keep track of all applications</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h5>Follow-up Strategies</h5>
+                        <ul>
+                            <li>Wait 1-2 weeks before following up</li>
+                            <li>Send a polite, brief email inquiry</li>
+                            <li>Reference specific aspects of the job</li>
+                            <li>Express continued interest</li>
+                            <li>Offer to provide additional information</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // This is a placeholder for the Jinja2 filters we're simulating in the template
+    // In a real application, these would be implemented as proper Jinja2 filters
+    document.addEventListener('DOMContentLoaded', function() {
+        // Simulate the selectattr filter for status breakdown
+        // This would normally be handled by Jinja2 on the server side
+    });
+</script>
+{% endblock %}

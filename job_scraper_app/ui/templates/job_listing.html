@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}{{ job_listing.title }} at {{ job_listing.company_name }} - Job Scraper App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h1 class="h4 mb-0">{{ job_listing.title }}</h1>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h2 class="h5">Company Information</h2>
+                    <p class="mb-1"><strong>Company:</strong> {{ job_listing.company_name }}</p>
+                    {% if job_listing.location %}
+                        <p class="mb-1"><strong>Location:</strong> {{ job_listing.location }}</p>
+                    {% endif %}
+                    {% if job_listing.job_type %}
+                        <p class="mb-1"><strong>Job Type:</strong> {{ job_listing.job_type }}</p>
+                    {% endif %}
+                    {% if job_listing.salary_info %}
+                        <p class="mb-1"><strong>Salary:</strong> {{ job_listing.salary_info }}</p>
+                    {% endif %}
+                    {% if job_listing.company_website %}
+                        <p class="mb-1"><strong>Website:</strong> <a href="{{ job_listing.company_website }}" target="_blank">{{ job_listing.company_website }}</a></p>
+                    {% endif %}
+                    <p class="mb-1"><strong>Source:</strong> {{ job_listing.source_site }}</p>
+                    <p class="mb-1"><strong>Posted:</strong> {{ job_listing.posted_date.strftime('%Y-%m-%d') if job_listing.posted_date else 'Unknown' }}</p>
+                    <p class="mb-1"><strong>Scraped:</strong> {{ job_listing.scraped_date.strftime('%Y-%m-%d') }}</p>
+                    <p class="mb-0"><strong>URL:</strong> <a href="{{ job_listing.url }}" target="_blank">View Original Listing</a></p>
+                </div>
+                
+                <div class="mb-4">
+                    <h2 class="h5">Job Description</h2>
+                    <div class="job-description border p-3 rounded bg-light">
+                        {% if job_listing.description %}
+                            <p>{{ job_listing.description|nl2br }}</p>
+                        {% else %}
+                            <p class="text-muted">No description available. Please check the original job listing.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if job_listing.contact_info %}
+                    <div class="mb-4">
+                        <h2 class="h5">Contact Information</h2>
+                        <p>{{ job_listing.contact_info }}</p>
+                    </div>
+                {% endif %}
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('job_listings') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Job Listings
+                    </a>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createApplicationModal">
+                        <i class="fas fa-briefcase"></i> Create Application
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Tailored Resumes -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h2 class="h5 mb-0"><i class="fas fa-file-alt"></i> Tailored Resumes</h2>
+            </div>
+            <div class="card-body">
+                {% if tailored_resumes %}
+                    <div class="list-group">
+                        {% for resume in tailored_resumes %}
+                            <div class="list-group-item">
+                                <h5 class="mb-1">{{ resume.name }}</h5>
+                                <p class="mb-1"><small class="text-muted">Created: {{ resume.creation_date.strftime('%Y-%m-%d') }}</small></p>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('download_file', filename=resume.file_path.split('/')[-1]) }}" class="btn btn-outline-primary">
+                                        <i class="fas fa-download"></i> Download
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No tailored resumes for this job listing yet.</p>
+                {% endif %}
+                
+                <div class="mt-3">
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#generateResumeModal">
+                        <i class="fas fa-magic"></i> Generate Tailored Resume
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Job Applications -->
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h2 class="h5 mb-0"><i class="fas fa-briefcase"></i> Applications</h2>
+            </div>
+            <div class="card-body">
+                {% if job_applications %}
+                    <div class="list-group">
+                        {% for application in job_applications %}
+                            <a href="{{ url_for('application', application_id=application.id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">Application #{{ application.id }}</h5>
+                                    <small>{{ application.application_date.strftime('%Y-%m-%d') }}</small>
+                                </div>
+                                <p class="mb-1">
+                                    <span class="badge bg-{{ 'success' if application.status == 'applied' else 'warning' if application.status == 'pending' else 'info' }}">
+                                        {{ application.status }}
+                                    </span>
+                                </p>
+                                {% if application.resume %}
+                                    <small><i class="fas fa-file-alt"></i> {{ application.resume.name }}</small>
+                                {% endif %}
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No applications for this job listing yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Generate Tailored Resume Modal -->
+<div class="modal fade" id="generateResumeModal" tabindex="-1" aria-labelledby="generateResumeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="generateResumeModalLabel">Generate Tailored Resume</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('generate_tailored_resume') }}" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="job_listing_id" value="{{ job_listing.id }}">
+                    
+                    <div class="mb-3">
+                        <label for="resume_id" class="form-label">Select Base Resume</label>
+                        <select class="form-select" id="resume_id" name="resume_id" required>
+                            <option value="">-- Select a Resume --</option>
+                            {% for resume in resumes %}
+                                <option value="{{ resume.id }}" {% if resume.is_primary %}selected{% endif %}>
+                                    {{ resume.name }} {% if resume.is_primary %}(Primary){% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> The system will analyze the job description and your resume to create a tailored version that highlights relevant skills and experience.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-magic"></i> Generate Resume
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Create Application Modal -->
+<div class="modal fade" id="createApplicationModal" tabindex="-1" aria-labelledby="createApplicationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createApplicationModalLabel">Create Job Application</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('create_application') }}" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="job_listing_id" value="{{ job_listing.id }}">
+                    
+                    <div class="mb-3">
+                        <label for="app_resume_id" class="form-label">Select Resume</label>
+                        <select class="form-select" id="app_resume_id" name="resume_id">
+                            <option value="">-- No Resume --</option>
+                            
+                            {% if tailored_resumes %}
+                                <optgroup label="Tailored Resumes">
+                                    {% for resume in tailored_resumes %}
+                                        <option value="{{ resume.id }}">{{ resume.name }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            {% endif %}
+                            
+                            <optgroup label="Regular Resumes">
+                                {% for resume in resumes %}
+                                    <option value="{{ resume.id }}" {% if resume.is_primary and not tailored_resumes %}selected{% endif %}>
+                                        {{ resume.name }} {% if resume.is_primary %}(Primary){% endif %}
+                                    </option>
+                                {% endfor %}
+                            </optgroup>
+                        </select>
+                        <div class="form-text">Select a resume to attach to this application, or leave blank if you haven't applied yet.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Add any notes about this application..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-briefcase"></i> Create Application
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Custom filter to convert newlines to <br> tags
+    document.addEventListener('DOMContentLoaded', function() {
+        // This is a workaround since we're not using a proper Jinja2 filter
+        // In a real application, you would define a proper nl2br filter
+        const jobDescription = document.querySelector('.job-description p');
+        if (jobDescription) {
+            jobDescription.innerHTML = jobDescription.innerHTML.replace(/\n/g, '<br>');
+        }
+    });
+</script>
+{% endblock %}
