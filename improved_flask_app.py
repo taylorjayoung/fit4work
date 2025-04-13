@@ -85,6 +85,47 @@ app = Flask(__name__,
             static_folder=str(project_dir / "job_scraper_app" / "ui" / "static"))
 app.secret_key = os.urandom(24)
 
+# Add custom Jinja2 filters
+@app.template_filter('extract_skills')
+def extract_skills_filter(text):
+    """Extract skills from resume text."""
+    if not text:
+        return []
+    
+    # Simple skill extraction based on common skills
+    common_skills = [
+        'python', 'java', 'javascript', 'html', 'css', 'sql', 'react', 'angular', 'vue',
+        'node', 'express', 'django', 'flask', 'spring', 'aws', 'azure', 'docker', 'kubernetes',
+        'git', 'agile', 'scrum', 'leadership', 'communication', 'teamwork', 'problem-solving'
+    ]
+    
+    text_lower = text.lower()
+    return [skill for skill in common_skills if skill in text_lower]
+
+@app.template_filter('extract_experience')
+def extract_experience_filter(text):
+    """Extract experience from resume text."""
+    if not text:
+        return []
+    
+    # Simple experience extraction - look for lines with years
+    lines = text.split('\n')
+    experience = []
+    
+    for line in lines:
+        # Look for lines that might contain job titles or years
+        if any(year in line for year in ['2020', '2021', '2022', '2023', '2024', '2025']):
+            experience.append(line.strip())
+    
+    return experience[:5]  # Return at most 5 experiences
+
+@app.template_filter('contains')
+def contains_filter(value, substring):
+    """Check if a string contains a substring."""
+    if not value:
+        return False
+    return substring in value
+
 # Configure the application
 app.config['UPLOAD_FOLDER'] = resume_dir
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB max upload size
