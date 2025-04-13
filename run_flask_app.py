@@ -241,12 +241,32 @@ def resume(resume_id):
     session = Session()
     try:
         # Get the resume
-        resume = session.query(Resume).filter_by(id=resume_id).first()
-        if not resume:
+        resume_db = session.query(Resume).filter_by(id=resume_id).first()
+        if not resume_db:
             return "Resume not found", 404
         
         # Get tailored resumes based on this resume
         tailored_resumes = session.query(TailoredResume).filter_by(base_resume_id=resume_id).all()
+        
+        # Parse the resume to extract structured information
+        parser = resume_manager.parser
+        resume_data = parser.parse(resume_db.file_path)
+        
+        # Combine database resume with parsed data
+        resume = {
+            'id': resume_db.id,
+            'name': resume_db.name,
+            'file_path': resume_db.file_path,
+            'content_text': resume_db.content_text,
+            'upload_date': resume_db.upload_date,
+            'is_primary': resume_db.is_primary,
+            'email': resume_data.get('email', []) if resume_data else [],
+            'phone': resume_data.get('phone', []) if resume_data else [],
+            'education': resume_data.get('education', []) if resume_data else [],
+            'experience': resume_data.get('experience', []) if resume_data else [],
+            'skills': resume_data.get('skills', []) if resume_data else [],
+            'links': resume_data.get('links', {}) if resume_data else {}
+        }
         
         return render_template('resume.html', 
                               resume=resume,

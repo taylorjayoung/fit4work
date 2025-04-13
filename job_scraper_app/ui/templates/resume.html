@@ -28,8 +28,130 @@
                 
                 <div class="mb-4">
                     <h2 class="h5">Resume Content</h2>
-                    <div class="border p-3 rounded bg-light" style="max-height: 400px; overflow-y: auto;">
-                        <pre class="mb-0" style="white-space: pre-wrap; font-family: inherit;">{{ resume.content_text }}</pre>
+                    
+                    <ul class="nav nav-tabs" id="resumeTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">Overview</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="experience-tab" data-bs-toggle="tab" data-bs-target="#experience" type="button" role="tab" aria-controls="experience" aria-selected="false">Experience</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="education-tab" data-bs-toggle="tab" data-bs-target="#education" type="button" role="tab" aria-controls="education" aria-selected="false">Education</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="skills-tab" data-bs-toggle="tab" data-bs-target="#skills" type="button" role="tab" aria-controls="skills" aria-selected="false">Skills</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="full-tab" data-bs-toggle="tab" data-bs-target="#full" type="button" role="tab" aria-controls="full" aria-selected="false">Full Text</button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content border border-top-0 p-3 rounded-bottom bg-light" style="max-height: 400px; overflow-y: auto;">
+                        <!-- Overview Tab -->
+                        <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5>Contact Information</h5>
+                                    <p><strong>Name:</strong> {{ resume.name }}</p>
+                                    {% if resume.email %}
+                                        <p><strong>Email:</strong> 
+                                        {% for email in resume.email %}
+                                            {{ email }}{% if not loop.last %}, {% endif %}
+                                        {% endfor %}
+                                        </p>
+                                    {% endif %}
+                                    
+                                    {% if resume.phone %}
+                                        <p><strong>Phone:</strong> 
+                                        {% for phone in resume.phone %}
+                                            {{ phone }}{% if not loop.last %}, {% endif %}
+                                        {% endfor %}
+                                        </p>
+                                    {% endif %}
+                                    
+                                    {% if resume.links %}
+                                        <h5 class="mt-3">Links</h5>
+                                        <ul class="list-unstyled">
+                                            {% for type, url in resume.links.items() %}
+                                                <li><strong>{{ type|title }}:</strong> <a href="{{ url }}" target="_blank">{{ url }}</a></li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <h5>Summary</h5>
+                                    <p>This resume contains:</p>
+                                    <ul>
+                                        <li>{{ resume.experience|length }} experience entries</li>
+                                        <li>{{ resume.education|length }} education entries</li>
+                                        <li>{{ resume.skills|length }} identified skills</li>
+                                    </ul>
+                                    
+                                    <p class="text-muted">Use the tabs above to view detailed sections.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Experience Tab -->
+                        <div class="tab-pane fade" id="experience" role="tabpanel" aria-labelledby="experience-tab">
+                            <h5>Work Experience</h5>
+                            {% if resume.experience %}
+                                <div class="accordion" id="experienceAccordion">
+                                    {% for exp in resume.experience %}
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="expHeading{{ loop.index }}">
+                                                <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#expCollapse{{ loop.index }}" aria-expanded="{{ 'true' if loop.first else 'false' }}" aria-controls="expCollapse{{ loop.index }}">
+                                                    Experience #{{ loop.index }}
+                                                </button>
+                                            </h2>
+                                            <div id="expCollapse{{ loop.index }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" aria-labelledby="expHeading{{ loop.index }}">
+                                                <div class="accordion-body">
+                                                    <p style="white-space: pre-wrap;">{{ exp }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-muted">No experience entries found in this resume.</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Education Tab -->
+                        <div class="tab-pane fade" id="education" role="tabpanel" aria-labelledby="education-tab">
+                            <h5>Education</h5>
+                            {% if resume.education %}
+                                <ul class="list-group">
+                                    {% for edu in resume.education %}
+                                        <li class="list-group-item">{{ edu }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="text-muted">No education entries found in this resume.</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Skills Tab -->
+                        <div class="tab-pane fade" id="skills" role="tabpanel" aria-labelledby="skills-tab">
+                            <h5>Skills</h5>
+                            {% if resume.skills %}
+                                <div>
+                                    {% for skill in resume.skills %}
+                                        <span class="badge bg-info text-dark me-1 mb-1">{{ skill }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-muted">No skills found in this resume.</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Full Text Tab -->
+                        <div class="tab-pane fade" id="full" role="tabpanel" aria-labelledby="full-tab">
+                            <h5>Full Resume Text</h5>
+                            <pre class="mb-0" style="white-space: pre-wrap; font-family: inherit;">{{ resume.content_text }}</pre>
+                        </div>
                     </div>
                 </div>
                 
