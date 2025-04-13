@@ -119,8 +119,8 @@ def extract_experience_filter(text):
     
     return experience[:5]  # Return at most 5 experiences
 
-@app.template_filter('contains')
-def contains_filter(value, substring):
+@app.template_test('contains')
+def contains_test(value, substring):
     """Check if a string contains a substring."""
     if not value:
         return False
@@ -271,7 +271,7 @@ def upload_resume():
             return redirect(url_for('resumes'))
         
         # Check if the file has an allowed extension
-        allowed_extensions = ['.docx', '.pdf']
+        allowed_extensions = ['.docx', '.pdf', '.txt']
         file_ext = os.path.splitext(file.filename)[1].lower()
         if file_ext not in allowed_extensions:
             flash(f"File extension {file_ext} not allowed", "error")
